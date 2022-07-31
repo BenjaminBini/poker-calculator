@@ -217,4 +217,36 @@ test("get value of a hand", function () {
   );
   expect(evalHighCard.level).toBe(0);
   expect(evalHighCard.cards).toEqual(["Ac", "Kd", "8d", "7h", "4c"]);
+
+  const evalLowStraight = evaluator.evaluate(
+    ["Ac", "8d"],
+    ["2c", "3c", "4c", "5d", "8s"]
+  );
+  const evalHighStraight = evaluator.evaluate(
+    ["5h", "6h"],
+    ["2c", "3c", "4c", "5d", "8s"]
+  );
+  expect(evalHighStraight.handValue).toBeGreaterThan(evalLowStraight.handValue);
+
+  const twoPairHighKicker = evaluator.evaluate(
+    ["9d", "7d"],
+    ["Ac", "Ah", "Kc", "Kh", "2s"]
+  );
+  const twoPairLowKicker = evaluator.evaluate(
+    ["5d", "7s"],
+    ["Ac", "Ah", "Kc", "Kh", "2s"]
+  );
+  expect(twoPairHighKicker.handValue).toBeGreaterThan(
+    twoPairLowKicker.handValue
+  );
+
+  const highFull = evaluator.evaluate(
+    ["9d", "7d"],
+    ["7h", "7c", "8s", "9s", "9h"]
+  );
+  const lowFull = evaluator.evaluate(
+    ["5d", "7s"],
+    ["7h", "7c", "8s", "9s", "9h"]
+  );
+  expect(highFull.handValue).toBeGreaterThan(lowFull.handValue);
 });

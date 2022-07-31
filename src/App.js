@@ -5,6 +5,7 @@ import CardButton from "./CardButton.js";
 import CardPlaceHolder from "./CardPlaceHolder.js";
 import MiniCard from "./MiniCard.js";
 import { ranks, suits } from "./poker-eval/cards.js";
+import { HAND_LABELS } from "./poker-eval/enums.js";
 import evaluator from "./poker-eval/evaluator.js";
 
 function App() {
@@ -159,55 +160,75 @@ function App() {
       <div className="grid grid-cols-2">
         <div className="space-y-4">
           {game.hands.map((hand, i) => (
-            <div key={i} className="space-y-1">
-              <div className="text-sm font-bold">Player {i + 1}</div>
-              <div className="flex gap-2">
-                {hand.map((h, j) =>
-                  h.length > 1 ? (
-                    <CardButton
-                      key={j}
-                      rank={h[0]}
-                      suit={h[1]}
-                      onClick={() => resetCardFromHand(i + 1, j)}
-                    ></CardButton>
-                  ) : (
-                    <CardPlaceHolder
-                      onClick={() => setCardToEdit([i + 1, j])}
-                      selected={cardToEdit[0] === i + 1 && cardToEdit[1] === j}
-                      key={j}
-                    ></CardPlaceHolder>
-                  )
-                )}
-              </div>
-              {getEval(hand) && (
-                <div className="flex items-center text-xs font-semibold space-x-2">
-                  <span>{getEval(hand).levelLabel}</span>
-
-                  <div className="flex gap-2">
-                    {getEval(hand).cards.map((h, i) => (
-                      <MiniCard key={i} rank={h[0]} suit={h[1]} />
-                    ))}
-                  </div>
+            <div key={i} className="flex space-x-8">
+              <div className="space-y-1 min-w-[260px]">
+                <div className="text-sm font-bold">Player {i + 1}</div>
+                <div className="flex gap-2">
+                  {hand.map((h, j) =>
+                    h.length > 1 ? (
+                      <CardButton
+                        key={j}
+                        rank={h[0]}
+                        suit={h[1]}
+                        onClick={() => resetCardFromHand(i + 1, j)}
+                      ></CardButton>
+                    ) : (
+                      <CardPlaceHolder
+                        onClick={() => setCardToEdit([i + 1, j])}
+                        selected={
+                          cardToEdit[0] === i + 1 && cardToEdit[1] === j
+                        }
+                        key={j}
+                      ></CardPlaceHolder>
+                    )
+                  )}
                 </div>
-              )}
+                {getEval(hand) && (
+                  <div className="flex items-center text-xs font-semibold space-x-2">
+                    <span>{HAND_LABELS[getEval(hand).levelValue]}</span>
+
+                    <div className="flex gap-2">
+                      {getEval(hand).cards.map((h, i) => (
+                        <MiniCard key={i} rank={h[0]} suit={h[1]} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div>
+                  {handEvals.length > i && hand.every((c) => c !== "") && (
+                    <div className="space-y-1">
+                      <div className="text-md font-semibold">
+                        Win:&nbsp;
+                        {Math.round(
+                          (handEvals[i].wins / handEvals[i].iterations) * 10000
+                        ) / 100}
+                        %
+                      </div>
+                      <div className="text-xs font-semibold">
+                        Ties:&nbsp;
+                        {Math.round(
+                          (handEvals[i].ties / handEvals[i].iterations) * 10000
+                        ) / 100}
+                        %
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
               <div>
                 {handEvals.length > i && hand.every((c) => c !== "") && (
-                  <div className="space-y-1">
-                    <div className="text-md font-semibold">
-                      Win:&nbsp;
-                      {Math.round(
-                        (handEvals[i].wins / handEvals[i].iterations) * 10000
-                      ) / 100}
-                      %
-                    </div>
-                    <div className="text-xs font-semibold">
-                      Ties:&nbsp;
-                      {Math.round(
-                        (handEvals[i].ties / handEvals[i].iterations) * 10000
-                      ) / 100}
-                      %
-                    </div>
-                  </div>
+                  <ul className="text-xs font-semibold">
+                    {Object.keys(handEvals[i].levels).map((l, j) => (
+                      <li key={j}>
+                        {HAND_LABELS[l]}:{" "}
+                        {Math.round(
+                          (handEvals[i].levels[l] / handEvals[i].iterations) *
+                            10000
+                        ) / 100}{" "}
+                        %
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
             </div>

@@ -44,34 +44,35 @@ const evaluator = {
         ...handEvaluation,
         level: HANDS.STRAIGHT_FLUSH,
         levelValue: "STRAIGHT_FLUSH",
-        levelLabel: "Straight Flush",
         cards: straightFlush,
+        // This is a special case where we need to return the highest card in the straight first for the calcualtion of the hand value
+        sortedCardsByValue: straight.slice().reverse(),
       };
     } else if (quads.length > 0) {
       handEvaluation = {
         ...handEvaluation,
         level: HANDS.FOUR_OF_A_KIND,
         levelValue: "FOUR_OF_A_KIND",
-        levelLabel: "Four of a Kind",
         cards: [
           ...quads.at(-1),
           this.getHighestCard(this.filterHand(hand, ...quads)),
         ],
       };
-    } else if (sets.length > 0 && pairs.length > 0) {
+    } else if ((sets.length > 0 && pairs.length > 0) || sets.length > 1) {
       handEvaluation = {
         ...handEvaluation,
         level: HANDS.FULL_HOUSE,
         levelValue: "FULL_HOUSE",
-        levelLabel: "Full House",
-        cards: [...this.getSets(hand).at(-1), ...pairs.at(-1)],
+        cards: [
+          ...sets.at(-1),
+          ...(pairs.length > 0 ? pairs.at(-1) : sets.at(-2).slice(-2)),
+        ],
       };
     } else if (flush) {
       handEvaluation = {
         ...handEvaluation,
         level: HANDS.FLUSH,
         levelValue: "FLUSH",
-        levelLabel: "Flush",
         cards: flush,
       };
     } else if (straight) {
@@ -79,15 +80,15 @@ const evaluator = {
         ...handEvaluation,
         level: HANDS.STRAIGHT,
         levelValue: "STRAIGHT",
-        levelLabel: "Straight",
         cards: straight,
+        // This is a special case where we need to return the highest card in the straight first for the calcualtion of the hand value
+        sortedCardsByValue: straight.slice().reverse(),
       };
     } else if (sets.length > 0) {
       handEvaluation = {
         ...handEvaluation,
         level: HANDS.THREE_OF_A_KIND,
         levelValue: "THREE_OF_A_KIND",
-        levelLabel: "Three of a Kind",
         cards: [
           ...sets.at(-1),
           ...this.sortHand(this.filterHand(hand, sets.at(-1)))
@@ -100,11 +101,12 @@ const evaluator = {
         ...handEvaluation,
         level: HANDS.TWO_PAIR,
         levelValue: "TWO_PAIR",
-        levelLabel: "Two Pair",
         cards: [
           ...pairs.at(-1),
           ...pairs.at(-2),
-          ...this.sortHand(this.filterHand(hand, pairs[0])).slice(-1).reverse(),
+          ...this.sortHand(this.filterHand(hand, [...pairs[0], ...pairs[1]]))
+            .slice(-1)
+            .reverse(),
         ],
       };
     } else if (pairs.length === 1) {
@@ -112,7 +114,6 @@ const evaluator = {
         ...handEvaluation,
         level: HANDS.ONE_PAIR,
         levelValue: "ONE_PAIR",
-        levelLabel: "One Pair",
         cards: [
           ...pairs[0],
           ...this.sortHand(this.filterHand(hand, pairs[0])).slice(-3).reverse(),
@@ -124,18 +125,20 @@ const evaluator = {
 
         level: HANDS.HIGH_CARD,
         levelValue: "HIGH_CARD",
-        levelLabel: "High Card",
         cards: [...this.sortHand(hand).slice(-5).reverse()],
         hand,
         pocketCards,
       };
     }
     handEvaluation.handValue =
-      handEvaluation.cards
+      (handEvaluation.sortedCardsByValue
+        ? handEvaluation.sortedCardsByValue
+        : handEvaluation.cards
+      )
         .map((card) => this.getRank(card))
         .reduce((acc, cur, i, arr) => {
           return acc + cur * Math.pow(10, (arr.length - i - 1) * 2);
-        }, this.getRank(handEvaluation.cards[0]) * Math.pow(10, handEvaluation.cards.length * 2)) +
+        }, 0) +
       handEvaluation.level * Math.pow(10, handEvaluation.cards.length * 2 + 1);
     return handEvaluation;
   },
