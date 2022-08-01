@@ -249,4 +249,26 @@ test("get value of a hand", function () {
     ["7h", "7c", "8s", "9s", "9h"]
   );
   expect(highFull.handValue).toBeGreaterThan(lowFull.handValue);
+
+  const twoPairA7Kicker9 = evaluator.evaluate(
+    ["9d", "7d"],
+    ["Ac", "6d", "7h", "Ah", "5s"]
+  );
+  const twoPairA7Kicker5 = evaluator.evaluate(
+    ["5d", "7s"],
+    ["Ac", "6d", "7h", "Ah", "5s"]
+  );
+  expect(twoPairA7Kicker9.handValue).toBeGreaterThan(
+    twoPairA7Kicker5.handValue
+  );
+
+  const highFlush = evaluator.evaluate(
+    ["As", "Jd"],
+    ["Ah", "8d", "Qh", "Ad", "6d"]
+  );
+  const lowFlush = evaluator.evaluate(
+    ["7d", "9d"],
+    ["Ah", "8d", "Qh", "Ad", "6d"]
+  );
+  expect(highFlush.handValue).toBeGreaterThan(lowFlush.handValue);
 });

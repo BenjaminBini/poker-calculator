@@ -15,7 +15,7 @@ self.onmessage = ({ data: { hands, fullBoard } }) => {
  */
 export function analyze(hands, fullBoard, postMessage, close) {
   const fullHands = hands.filter((h) => h.every((c) => c !== ""));
-  if (fullHands.length < 2) {
+  if (fullHands.length < 1) {
     postMessage([]);
     return;
   }
@@ -35,7 +35,7 @@ export function analyze(hands, fullBoard, postMessage, close) {
     };
   });
 
-  const maxIterations = 2000000;
+  const maxIterations = 10000000;
   const numberOfCardsToCompleteBoard = 7 - fullHands[0].length - board.length;
   const deadCards = [...hands.flatMap((h) => h), ...board];
   const possibleCards = allCards.filter((c) => !deadCards.includes(c));

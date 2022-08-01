@@ -74,6 +74,8 @@ const evaluator = {
         level: HANDS.FLUSH,
         levelValue: "FLUSH",
         cards: flush,
+        // This is a special case where we need to return the highest card in the flush first for the calcualtion of the hand value
+        sortedCardsByValue: flush.slice().reverse(),
       };
     } else if (straight) {
       handEvaluation = {
@@ -104,7 +106,9 @@ const evaluator = {
         cards: [
           ...pairs.at(-1),
           ...pairs.at(-2),
-          ...this.sortHand(this.filterHand(hand, [...pairs[0], ...pairs[1]]))
+          ...this.sortHand(
+            this.filterHand(hand, [...pairs.at(-1), ...pairs.at(-2)])
+          )
             .slice(-1)
             .reverse(),
         ],
