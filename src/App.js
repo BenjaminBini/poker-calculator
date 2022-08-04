@@ -3,8 +3,8 @@ import { useState } from "react";
 import Button from "./Button.js";
 import CardButton from "./CardButton.js";
 import CardPlaceHolder from "./CardPlaceHolder.js";
+import CardSelector from "./CardSelector.js";
 import PlayerHand from "./PlayerHand.js";
-import { ranks, suits } from "./poker-eval/cards.js";
 import evaluator from "./poker-eval/evaluator.js";
 
 function App() {
@@ -125,7 +125,9 @@ function App() {
     };
     setGame(newGame);
     setHandEvals([]);
-    calculatorWorker.terminate();
+    if (calculatorWorker) {
+      calculatorWorker.terminate();
+    }
     setCardToEdit([1, 0]);
   };
 
@@ -133,68 +135,53 @@ function App() {
     <div className="max-w-4xl m-auto my-4">
       <div className="mx-5">
         <h1 className="font-bold text-4xl mb-6 text-white">Poker calculator</h1>
-        <div className="flex items-center space-x-2 mb-20">
-          <Button onClick={reset}>Reset</Button>
+        <div className="flex items-center space-x-2 dk:mb-6">
+          <Button onClick={reset}>Reset the game</Button>
           {handEvals.length > 0 && (
             <span className="text-white">
               {handEvals[0].iterations} iterations
             </span>
           )}
         </div>
-        <div className="bg-slate-800 py-4 px-6 mb-6 rounded-xl flex items-center justify-center">
-          <div className="flex flex-col gap-4">
-            {suits.map((suit, i) => (
-              <div key={i} className="flex flex-wrap gap-2 justify-center">
-                {ranks.map((hand, j) => (
-                  <CardButton
-                    key={j}
-                    rank={hand}
-                    suit={suit}
-                    onClick={() => addCard(`${hand}${suit}`)}
-                    disabled={[
-                      ...game.hands.flatMap((h) => h),
-                      ...game.board,
-                    ].includes(`${hand}${suit}`)}
-                  ></CardButton>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="bg-slate-800 shadow-2xl rounded-xl py-20">
-          <div className="bg-green-600 border-8 shadow-lg border-yellow-600 mx-16 rounded-full h-[300px] relative">
-            <div className="absolute top-0 bottom-0 left-0 right-0  border-2 rounded-full m-2 box-content"></div>
-            {game.hands.map((hand, i) => (
-              <PlayerHand
-                key={i}
-                i={i}
-                hand={hand}
-                evaluation={getEval(hand)}
-                handEvals={handEvals}
-                cardToEdit={cardToEdit}
-                setCardToEdit={setCardToEdit}
-                resetCardFromHand={resetCardFromHand}
-              ></PlayerHand>
-            ))}
-            <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-3/4 px-2 pt-1 mt-3 pb-2 border-white flex flex-col gap-1 bg-slate-600 rounded-md bg-opacity-50 shadow-lg">
-              <div className="text-sm font-bold text-slate-100">Board</div>
-              <div className="flex gap-2">
-                {game.board.map((h, i) =>
-                  h.length > 0 ? (
-                    <CardButton
-                      key={i}
-                      rank={h[0]}
-                      suit={h[1]}
-                      onClick={() => resetCardFromBoard(i)}
-                    ></CardButton>
-                  ) : (
-                    <CardPlaceHolder
-                      onClick={() => setCardToEdit([0, i])}
-                      selected={cardToEdit[0] === 0 && cardToEdit[1] === i}
-                      key={i}
-                    ></CardPlaceHolder>
-                  )
-                )}
+        <CardSelector addCard={addCard} game={game}></CardSelector>
+        <div className=" dk:bg-slate-800 dk:shadow-2xl rounded-xl py-6 dk:py-20">
+          <div className="flex flex-col-reverse items-start gap-4 dk:bg-green-600 dk:border-yellow-600 dk:border-8 dk:shadow-lg dk:mx-16 rounded-full dk:h-[300px] relative">
+            <div className="hidden dk:block absolute top-0 bottom-0 left-0 right-0  border-2 rounded-full m-2 box-content"></div>
+            <div className="flex flex-col gap-4 mb-32 dk:mb-0">
+              {game.hands.map((hand, i) => (
+                <PlayerHand
+                  key={i}
+                  i={i}
+                  hand={hand}
+                  evaluation={getEval(hand)}
+                  handEvals={handEvals}
+                  cardToEdit={cardToEdit}
+                  setCardToEdit={setCardToEdit}
+                  resetCardFromHand={resetCardFromHand}
+                ></PlayerHand>
+              ))}
+            </div>
+            <div>
+              <div className="dk:absolute dk:left-1/2 dk:-translate-x-1/2 dk:top-1/2 dk:-translate-y-3/4 px-2 pt-1 dk:mt-3 pb-2 border-white flex flex-col gap-1 bg-slate-600 rounded-md bg-opacity-50 shadow-lg">
+                <div className="text-sm font-bold text-slate-100">Board</div>
+                <div className="flex gap-2">
+                  {game.board.map((h, i) =>
+                    h.length > 0 ? (
+                      <CardButton
+                        key={i}
+                        rank={h[0]}
+                        suit={h[1]}
+                        onClick={() => resetCardFromBoard(i)}
+                      ></CardButton>
+                    ) : (
+                      <CardPlaceHolder
+                        onClick={() => setCardToEdit([0, i])}
+                        selected={cardToEdit[0] === 0 && cardToEdit[1] === i}
+                        key={i}
+                      ></CardPlaceHolder>
+                    )
+                  )}
+                </div>
               </div>
             </div>
           </div>

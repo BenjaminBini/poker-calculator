@@ -12,6 +12,9 @@ module.exports = {
           "50%": { display: "block", opacity: 1 },
         },
       },
+      screens: {
+        dk: "900px",
+      },
     },
   },
   plugins: [],
