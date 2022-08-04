@@ -2,7 +2,7 @@ import Button from "./Button";
 
 const CardButton = ({ rank, suit, disabled, onClick }) => (
   <Button onClick={onClick} disabled={disabled}>
-    <div className="w-8 flex justify-between items-center">
+    <div className="w-8 flex justify-between items-center text-black">
       <div>
         <img alt={suit} src={`./icons/${suit}.png`} className="w-4" />
       </div>

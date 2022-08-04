@@ -15,17 +15,18 @@ self.onmessage = ({ data: { hands, fullBoard } }) => {
  */
 export function analyze(hands, fullBoard, postMessage, close) {
   const fullHands = hands.filter((h) => h.every((c) => c !== ""));
-  if (fullHands.length < 1) {
+  if (fullHands.length < 2) {
     postMessage([]);
     return;
   }
   const board = fullBoard.filter((c) => c !== "");
-  const analysis = fullHands.map((hand, i) => {
+  const analysis = hands.map((hand, i) => {
     return {
       key: i,
       wins: 0,
       ties: 0,
       hand,
+      iterations: 0,
       levels: {
         ...Object.keys(HANDS).reduce(
           (acc, curr) => ({ ...acc, [curr]: 0 }),
@@ -34,8 +35,11 @@ export function analyze(hands, fullBoard, postMessage, close) {
       },
     };
   });
+  const analysisWithHands = analysis.filter((a) =>
+    a.hand.every((c) => c !== "")
+  );
 
-  const maxIterations = 10000000;
+  const maxIterations = 1_000_000;
   const numberOfCardsToCompleteBoard = 7 - fullHands[0].length - board.length;
   const deadCards = [...hands.flatMap((h) => h), ...board];
   const possibleCards = allCards.filter((c) => !deadCards.includes(c));
@@ -67,7 +71,7 @@ export function analyze(hands, fullBoard, postMessage, close) {
 
   let i = 0;
   for (let drawnCards of drawnCardsList) {
-    const handEvals = analysis.map((p) =>
+    const handEvals = analysisWithHands.map((p) =>
       evaluator.evaluate(p.hand, [...board, ...drawnCards])
     );
     handEvals.sort((a, b) => a.handValue - b.handValue).reverse();
@@ -75,12 +79,12 @@ export function analyze(hands, fullBoard, postMessage, close) {
       (e) => e.handValue === handEvals[0].handValue
     );
     const iterations = i;
-    analysis.forEach((p, j) => {
+    analysisWithHands.forEach((p) => {
       p.iterations = iterations + 1;
       const handEval = handEvals.find((e) => e.pocketCards === p.hand);
       p.levels[handEval.levelValue] = p.levels[handEval.levelValue] + 1;
     });
-    const winningHands = analysis.filter((h) =>
+    const winningHands = analysisWithHands.filter((h) =>
       winningEvals.some((e) => e.pocketCards === h.hand)
     );
     if (winningHands.length > 1) {
@@ -88,8 +92,7 @@ export function analyze(hands, fullBoard, postMessage, close) {
     } else {
       winningHands.forEach((h) => h.wins++);
     }
-    analysis.forEach((p) => {});
-    if (i > 0 && (i + 1) % 1000 === 0) {
+    if (i > 0 && (i + 1) % 10000 === 0) {
       postMessage(analysis);
     }
     i++;

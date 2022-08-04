@@ -3,9 +3,8 @@ import { useState } from "react";
 import Button from "./Button.js";
 import CardButton from "./CardButton.js";
 import CardPlaceHolder from "./CardPlaceHolder.js";
-import MiniCard from "./MiniCard.js";
+import PlayerHand from "./PlayerHand.js";
 import { ranks, suits } from "./poker-eval/cards.js";
-import { HAND_LABELS } from "./poker-eval/enums.js";
 import evaluator from "./poker-eval/evaluator.js";
 
 function App() {
@@ -131,129 +130,72 @@ function App() {
   };
 
   return (
-    <div className="max-w-4xl m-auto space-y-6 my-4">
-      <h1 className="font-bold text-4xl">Poker calculator</h1>
-      <div className="flex flex-col gap-2">
-        {suits.map((suit, i) => (
-          <div key={i} className="flex flex-wrap gap-2">
-            {ranks.map((hand, j) => (
-              <CardButton
-                key={j}
-                rank={hand}
-                suit={suit}
-                onClick={() => addCard(`${hand}${suit}`)}
-                disabled={[
-                  ...game.hands.flatMap((h) => h),
-                  ...game.board,
-                ].includes(`${hand}${suit}`)}
-              ></CardButton>
+    <div className="max-w-4xl m-auto my-4">
+      <div className="mx-5">
+        <h1 className="font-bold text-4xl mb-6 text-white">Poker calculator</h1>
+        <div className="flex items-center space-x-2 mb-20">
+          <Button onClick={reset}>Reset</Button>
+          {handEvals.length > 0 && (
+            <span className="text-white">
+              {handEvals[0].iterations} iterations
+            </span>
+          )}
+        </div>
+        <div className="bg-slate-800 py-4 px-6 mb-6 rounded-xl flex items-center justify-center">
+          <div className="flex flex-col gap-4">
+            {suits.map((suit, i) => (
+              <div key={i} className="flex flex-wrap gap-2 justify-center">
+                {ranks.map((hand, j) => (
+                  <CardButton
+                    key={j}
+                    rank={hand}
+                    suit={suit}
+                    onClick={() => addCard(`${hand}${suit}`)}
+                    disabled={[
+                      ...game.hands.flatMap((h) => h),
+                      ...game.board,
+                    ].includes(`${hand}${suit}`)}
+                  ></CardButton>
+                ))}
+              </div>
             ))}
           </div>
-        ))}
-      </div>
-      <div className="flex items-center space-x-2">
-        <Button onClick={reset}>Reset</Button>
-        {handEvals.length > 0 && (
-          <span>{handEvals[0].iterations} iterations</span>
-        )}
-      </div>
-      <div className="grid grid-cols-2">
-        <div className="space-y-4">
-          {game.hands.map((hand, i) => (
-            <div key={i} className="flex space-x-8">
-              <div className="space-y-1 min-w-[260px]">
-                <div className="text-sm font-bold">Player {i + 1}</div>
-                <div className="flex gap-2">
-                  {hand.map((h, j) =>
-                    h.length > 1 ? (
-                      <CardButton
-                        key={j}
-                        rank={h[0]}
-                        suit={h[1]}
-                        onClick={() => resetCardFromHand(i + 1, j)}
-                      ></CardButton>
-                    ) : (
-                      <CardPlaceHolder
-                        onClick={() => setCardToEdit([i + 1, j])}
-                        selected={
-                          cardToEdit[0] === i + 1 && cardToEdit[1] === j
-                        }
-                        key={j}
-                      ></CardPlaceHolder>
-                    )
-                  )}
-                </div>
-                {getEval(hand) && (
-                  <div className="flex items-center text-xs font-semibold space-x-2">
-                    <span>{HAND_LABELS[getEval(hand).levelValue]}</span>
-
-                    <div className="flex gap-2">
-                      {getEval(hand).cards.map((h, i) => (
-                        <MiniCard key={i} rank={h[0]} suit={h[1]} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div>
-                  {handEvals.length > i && hand.every((c) => c !== "") && (
-                    <div className="space-y-1">
-                      <div className="text-md font-semibold">
-                        Win:&nbsp;
-                        {Math.round(
-                          (handEvals[i].wins / handEvals[i].iterations) * 10000
-                        ) / 100}
-                        %
-                      </div>
-                      <div className="text-xs font-semibold">
-                        Ties:&nbsp;
-                        {Math.round(
-                          (handEvals[i].ties / handEvals[i].iterations) * 10000
-                        ) / 100}
-                        %
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div>
-                {handEvals.length > i && hand.every((c) => c !== "") && (
-                  <ul className="text-xs font-semibold">
-                    {Object.keys(handEvals[i].levels).map((l, j) => (
-                      <li key={j}>
-                        {HAND_LABELS[l]}:{" "}
-                        {Math.round(
-                          (handEvals[i].levels[l] / handEvals[i].iterations) *
-                            10000
-                        ) / 100}{" "}
-                        %
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          ))}
         </div>
-        <div className="flex justify-end">
-          <div>
-            <div className="text-sm font-bold text-right">Board</div>
-            <div className="flex gap-2">
-              {game.board.map((h, i) =>
-                h.length > 0 ? (
-                  <CardButton
-                    key={i}
-                    rank={h[0]}
-                    suit={h[1]}
-                    onClick={() => resetCardFromBoard(i)}
-                  ></CardButton>
-                ) : (
-                  <CardPlaceHolder
-                    onClick={() => setCardToEdit([0, i])}
-                    selected={cardToEdit[0] === 0 && cardToEdit[1] === i}
-                    key={i}
-                  ></CardPlaceHolder>
-                )
-              )}
+        <div className="bg-slate-800 shadow-2xl rounded-xl py-20">
+          <div className="bg-green-600 border-8 shadow-lg border-yellow-600 mx-16 rounded-full h-[300px] relative">
+            <div className="absolute top-0 bottom-0 left-0 right-0  border-2 rounded-full m-2 box-content"></div>
+            {game.hands.map((hand, i) => (
+              <PlayerHand
+                key={i}
+                i={i}
+                hand={hand}
+                evaluation={getEval(hand)}
+                handEvals={handEvals}
+                cardToEdit={cardToEdit}
+                setCardToEdit={setCardToEdit}
+                resetCardFromHand={resetCardFromHand}
+              ></PlayerHand>
+            ))}
+            <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-3/4 px-2 pt-1 mt-3 pb-2 border-white flex flex-col gap-1 bg-slate-600 rounded-md bg-opacity-50 shadow-lg">
+              <div className="text-sm font-bold text-slate-100">Board</div>
+              <div className="flex gap-2">
+                {game.board.map((h, i) =>
+                  h.length > 0 ? (
+                    <CardButton
+                      key={i}
+                      rank={h[0]}
+                      suit={h[1]}
+                      onClick={() => resetCardFromBoard(i)}
+                    ></CardButton>
+                  ) : (
+                    <CardPlaceHolder
+                      onClick={() => setCardToEdit([0, i])}
+                      selected={cardToEdit[0] === 0 && cardToEdit[1] === i}
+                      key={i}
+                    ></CardPlaceHolder>
+                  )
+                )}
+              </div>
             </div>
           </div>
         </div>

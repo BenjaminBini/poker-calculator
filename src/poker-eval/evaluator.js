@@ -139,7 +139,7 @@ const evaluator = {
         ? handEvaluation.sortedCardsByValue
         : handEvaluation.cards
       )
-        .map((card) => this.getRank(card))
+        .map((card) => (card ? this.getRank(card) : 0))
         .reduce((acc, cur, i, arr) => {
           return acc + cur * Math.pow(10, (arr.length - i - 1) * 2);
         }, 0) +
