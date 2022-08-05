@@ -5,6 +5,7 @@ import CardButton from "./CardButton.js";
 import CardPlaceHolder from "./CardPlaceHolder.js";
 import CardSelector from "./CardSelector.js";
 import PlayerHand from "./PlayerHand.js";
+import { HAND_LABELS } from "./poker-eval/enums.js";
 import evaluator from "./poker-eval/evaluator.js";
 
 function App() {
@@ -136,7 +137,7 @@ function App() {
       <div className="mx-5">
         <h1 className="font-bold text-4xl mb-6 text-white">Poker calculator</h1>
         <div className="flex items-center space-x-2 dk:mb-6">
-          <Button onClick={reset}>Reset the game</Button>
+          <Button onClick={reset}>Reset</Button>
           {handEvals.length > 0 && (
             <span className="text-white">
               {handEvals[0].iterations} iterations
@@ -145,9 +146,9 @@ function App() {
         </div>
         <CardSelector addCard={addCard} game={game}></CardSelector>
         <div className=" dk:bg-slate-800 dk:shadow-2xl rounded-xl py-6 dk:py-20">
-          <div className="flex flex-col-reverse items-start gap-4 dk:bg-green-600 dk:border-yellow-600 dk:border-8 dk:shadow-lg dk:mx-16 rounded-full dk:h-[300px] relative">
+          <div className="flex flex-col-reverse items-start gap-4 dk:bg-green-600 dk:border-yellow-600 dk:border-[12px] dk:shadow-lg dk:mx-16 rounded-full dk:h-[300px] relative">
             <div className="hidden dk:block absolute top-0 bottom-0 left-0 right-0  border-2 rounded-full m-2 box-content"></div>
-            <div className="flex flex-col gap-4 mb-32 dk:mb-0">
+            <div className="flex flex-col gap-4 mb-40 dk:mb-0">
               {game.hands.map((hand, i) => (
                 <PlayerHand
                   key={i}
@@ -186,6 +187,36 @@ function App() {
             </div>
           </div>
         </div>
+        {handEvals.length > 0 && (
+          <div className="hidden dk:flex gap-6 flex-wrap my-6">
+            {game.hands.map(
+              (hand, i) =>
+                hand.every((c) => c !== "") && (
+                  <div
+                    key={i}
+                    className=" dk:bg-slate-800 dk:shadow-2xl rounded-xl py-2 px-2 text-slate-100"
+                  >
+                    <div className="font-bold mb-2">Player {i + 1}</div>
+                    <ul className="text-sm font-semibold flex flex-col gap-1 justify-between min-w-[180px]">
+                      {Object.keys(handEvals[i].levels).map((l, j) => (
+                        <li key={j} className="flex justify-between">
+                          <div>{HAND_LABELS[l]}</div>
+                          <div>
+                            {Math.round(
+                              (handEvals[i].levels[l] /
+                                handEvals[i].iterations) *
+                                10000
+                            ) / 100}
+                            &nbsp;%
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
