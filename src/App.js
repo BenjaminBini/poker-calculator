@@ -136,13 +136,36 @@ function App() {
     <div className="max-w-4xl m-auto my-4">
       <div className="mx-5">
         <h1 className="font-bold text-4xl mb-6 text-white">Poker calculator</h1>
+        <div>
+          <Button onClick={reset}>New hand</Button>
+        </div>
         <div className="flex items-center space-x-2 dk:mb-6">
-          <Button onClick={reset}>Reset</Button>
-          {handEvals.length > 0 && (
-            <span className="text-white">
-              {handEvals[0].iterations} iterations
-            </span>
-          )}
+          <div className="w-full mt-2">
+            <div className="text-slate-100 text-sm text-right italic mb-1">
+              {handEvals.length > 0 ? (
+                <span>
+                  {handEvals[0].iterations.toLocaleString()} /{" "}
+                  {handEvals[0].totalIterations.toLocaleString()} iterations
+                </span>
+              ) : (
+                <div>Please pick at least 2 hands</div>
+              )}
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full"
+                style={{
+                  width:
+                    handEvals.length > 0
+                      ? (handEvals[0].iterations /
+                          handEvals[0].totalIterations) *
+                          100 +
+                        "%"
+                      : 0,
+                }}
+              ></div>
+            </div>
+          </div>
         </div>
         <CardSelector addCard={addCard} game={game}></CardSelector>
         <div className=" dk:bg-slate-800 dk:shadow-2xl rounded-xl py-6 dk:py-20">
