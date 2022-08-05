@@ -21,13 +21,21 @@ export function analyze(hands, fullBoard, postMessage, close) {
     return;
   }
   const board = fullBoard.filter((c) => c !== "");
+  const numberOfCardsToCompleteBoard = 7 - fullHands[0].length - board.length;
+  const deadCards = [...hands.flatMap((h) => h), ...board];
+  const possibleCards = allCards.filter((c) => !deadCards.includes(c));
+
   const analysis = hands.map((hand, i) => {
     return {
       key: i,
       wins: 0,
       ties: 0,
       hand,
-      iterations: 0,
+      iterations: 1,
+      totalIterations: combinationsCount(
+        possibleCards.length,
+        numberOfCardsToCompleteBoard
+      ),
       levels: {
         ...Object.keys(HANDS).reduce(
           (acc, curr) => ({ ...acc, [curr]: 0 }),
@@ -36,44 +44,24 @@ export function analyze(hands, fullBoard, postMessage, close) {
       },
     };
   });
+  postMessage(analysis);
   const analysisWithHands = analysis.filter((a) =>
     a.hand.every((c) => c !== "")
   );
 
-  const maxIterations = 1000_000;
-  const numberOfCardsToCompleteBoard = 7 - fullHands[0].length - board.length;
-  const deadCards = [...hands.flatMap((h) => h), ...board];
-  const possibleCards = allCards.filter((c) => !deadCards.includes(c));
-  const drawnCardsList = [];
+  let drawnCardsList = [];
+
   const t1 = performance.now();
   console.log((t1 - t0) / 1000 + "s - Start drawing cards");
-  if (numberOfCardsToCompleteBoard === 2) {
-    // For the turn and river, we check all combinations
-    drawnCardsList.push(
-      ...possibleCards.flatMap((c1) => {
-        return possibleCards.filter((c2) => c1 !== c2).map((c2) => [c1, c2]);
-      })
-    );
-  } else if (numberOfCardsToCompleteBoard === 1) {
-    // If we only need the river, we check each card
-    drawnCardsList.push(...possibleCards.map((c) => [c]));
-  } else if (numberOfCardsToCompleteBoard >= 3) {
-    for (let i = 0; i < maxIterations; i++) {
-      // For more, we check a maximum of maxIterations random combinations
-      const drawnCards = new Set();
-      do {
-        drawnCards.add(
-          possibleCards[Math.floor(Math.random() * possibleCards.length)]
-        );
-      } while (drawnCards.size < numberOfCardsToCompleteBoard);
-      drawnCardsList.push(Array.from(drawnCards));
-    }
-  } else if (numberOfCardsToCompleteBoard === 0) {
+  if (numberOfCardsToCompleteBoard === 0) {
     drawnCardsList.push([]);
+  } else {
+    drawnCardsList = combinations(possibleCards, numberOfCardsToCompleteBoard);
+    shuffleArray(drawnCardsList);
   }
   const t2 = performance.now();
   console.log((t2 - t1) / 1000 + "s - End drawing cards");
-
+  console.log(drawnCardsList.length + " cards drawn");
   let i = 0;
   for (let drawnCards of drawnCardsList) {
     const handEvals = analysisWithHands.map((p) =>
@@ -104,4 +92,70 @@ export function analyze(hands, fullBoard, postMessage, close) {
   console.log((t3 - t2) / 1000 + "s - End analyzing");
   postMessage(analysis);
   close();
+}
+
+function combinations(set, k) {
+  var i, j, combs, head, tailcombs;
+
+  // There is no way to take e.g. sets of 5 elements from
+  // a set of 4.
+  if (k > set.length || k <= 0) {
+    return [];
+  }
+
+  // K-sized set has only one K-sized subset.
+  if (k === set.length) {
+    return [set];
+  }
+
+  // There is N 1-sized subsets in a N-sized set.
+  if (k === 1) {
+    combs = [];
+    for (i = 0; i < set.length; i++) {
+      combs.push([set[i]]);
+    }
+    return combs;
+  }
+
+  combs = [];
+  for (i = 0; i < set.length - k + 1; i++) {
+    // head is a list that includes only our current element.
+    head = set.slice(i, i + 1);
+    // We take smaller combinations from the subsequent elements
+    tailcombs = combinations(set.slice(i + 1), k - 1);
+    // For each (k-1)-combination we join it with the current
+    // and store it to the set of k-combinations.
+    for (j = 0; j < tailcombs.length; j++) {
+      combs.push(head.concat(tailcombs[j]));
+    }
+  }
+  return combs;
+}
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = array[i];
+    array[i] = array[j];
+    array[j] = temp;
+  }
+}
+
+function productRange(a, b) {
+  var prd = a,
+    i = a;
+
+  while (i++ < b) {
+    prd *= i;
+  }
+  return prd;
+}
+
+function combinationsCount(n, r) {
+  if (n === r || r === 0) {
+    return 1;
+  } else {
+    r = r < n - r ? n - r : r;
+    return productRange(r + 1, n) / productRange(1, n - r);
+  }
 }
