@@ -196,47 +196,29 @@ const evaluator = {
    * @returns The array of cards making straight if it exists, otherwise null.
    */
   getStraight(hand) {
-    const straights = this.getAllStraights(hand);
-    const highestStraight = straights.sort(
-      (a, b) =>
-        this.getRank(this.getHighestCard(b)) -
-        this.getRank(this.getHighestCard(a))
-    )[0];
-    return highestStraight ? highestStraight.slice(-5) : null;
-  },
-  /**
-   * Get all 5+ more cards straights in the hand.
-   * @param {*} hand The hand to verify, represented as an array of cards.
-   * @returns All 5+ more cards straights in the hand.
-   */
-  getAllStraights(hand) {
-    let sortedHand = this.sortHand(hand);
-    // Consider the ace as a low and a high card
-    if (this.getRank(sortedHand.at(-1)) === 14) {
-      sortedHand = [sortedHand.at(-1), ...sortedHand];
+    const handWithoutSuits = hand.map((card) => card[0]).join("");
+    const straights = [
+      "TJQKA".split(""),
+      "9TJQK".split(""),
+      "89TJQ".split(""),
+      "789JT".split(""),
+      "6789T".split(""),
+      "56789".split(""),
+      "45678".split(""),
+      "34567".split(""),
+      "23456".split(""),
+      "A2345".split(""),
+    ];
+    const highestStraight = straights.find((s) =>
+      s.every((c) => handWithoutSuits.includes(c))
+    );
+    if (!highestStraight) {
+      return null;
     }
-    // Remove rank duplicates
-    sortedHand = sortedHand.filter((card, i) => {
-      return (
-        i === 0 || this.getRank(card) !== this.getRank(sortedHand.at(i - 1))
-      );
-    });
-    let chunks = [];
-    let prev = 0;
-    sortedHand.forEach((card) => {
-      if (
-        this.getRank(card) - prev !== 1 &&
-        this.getRank(card) - prev !== -12
-      ) {
-        chunks.push([]);
-      }
-      chunks.at(-1).push(card);
-      prev = this.getRank(card);
-    });
-    chunks.sort((a, b) => b.length - a.length);
-
-    const straights = chunks.filter((chunk) => chunk.length >= 5);
-    return straights;
+    const straight = highestStraight.map((card) =>
+      hand.find((h) => h[0] === card)
+    );
+    return straight;
   },
 
   /**

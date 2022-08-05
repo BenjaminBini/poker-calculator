@@ -14,6 +14,7 @@ self.onmessage = ({ data: { hands, fullBoard } }) => {
  * @returns The analyse of the situation
  */
 export function analyze(hands, fullBoard, postMessage, close) {
+  const t0 = performance.now();
   const fullHands = hands.filter((h) => h.every((c) => c !== ""));
   if (fullHands.length < 2) {
     postMessage([]);
@@ -39,11 +40,13 @@ export function analyze(hands, fullBoard, postMessage, close) {
     a.hand.every((c) => c !== "")
   );
 
-  const maxIterations = 1_000_000;
+  const maxIterations = 1000_000;
   const numberOfCardsToCompleteBoard = 7 - fullHands[0].length - board.length;
   const deadCards = [...hands.flatMap((h) => h), ...board];
   const possibleCards = allCards.filter((c) => !deadCards.includes(c));
   const drawnCardsList = [];
+  const t1 = performance.now();
+  console.log((t1 - t0) / 1000 + "s - Start drawing cards");
   if (numberOfCardsToCompleteBoard === 2) {
     // For the turn and river, we check all combinations
     drawnCardsList.push(
@@ -68,16 +71,16 @@ export function analyze(hands, fullBoard, postMessage, close) {
   } else if (numberOfCardsToCompleteBoard === 0) {
     drawnCardsList.push([]);
   }
+  const t2 = performance.now();
+  console.log((t2 - t1) / 1000 + "s - End drawing cards");
 
   let i = 0;
   for (let drawnCards of drawnCardsList) {
     const handEvals = analysisWithHands.map((p) =>
       evaluator.evaluate(p.hand, [...board, ...drawnCards])
     );
-    handEvals.sort((a, b) => a.handValue - b.handValue).reverse();
-    const winningEvals = handEvals.filter(
-      (e) => e.handValue === handEvals[0].handValue
-    );
+    const maxEval = Math.max(...handEvals.map((e) => e.handValue));
+    const winningEvals = handEvals.filter((e) => e.handValue === maxEval);
     const iterations = i;
     analysisWithHands.forEach((p) => {
       p.iterations = iterations + 1;
@@ -97,6 +100,8 @@ export function analyze(hands, fullBoard, postMessage, close) {
     }
     i++;
   }
+  const t3 = performance.now();
+  console.log((t3 - t2) / 1000 + "s - End analyzing");
   postMessage(analysis);
   close();
 }
