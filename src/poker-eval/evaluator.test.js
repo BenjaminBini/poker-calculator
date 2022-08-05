@@ -264,11 +264,11 @@ test("get value of a hand", function () {
 
   const highFlush = evaluator.evaluate(
     ["As", "Jd"],
-    ["Ah", "8d", "Qh", "Ad", "6d"]
+    ["Ah", "8d", "Qd", "Ad", "6d"]
   );
   const lowFlush = evaluator.evaluate(
     ["7d", "9d"],
-    ["Ah", "8d", "Qh", "Ad", "6d"]
+    ["Ah", "8d", "Qd", "Ad", "6d"]
   );
   expect(highFlush.handValue).toBeGreaterThan(lowFlush.handValue);
 });
