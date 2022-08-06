@@ -29,26 +29,53 @@ const evaluator = {
     if (hand.length === 0) {
       return;
     }
-    const straightFlush = this.getStraightFlush(hand);
-    const quads = this.getQuads(hand);
-    const flush = this.getFlush(hand);
-    const straight = this.getStraight(hand);
-    const sets = this.getSets(hand);
-    const pairs = this.getPairs(hand);
+
+    const handEvaluation = this.getHandEvaluation(hand, pocketCards);
+
+    handEvaluation.handValue =
+      (handEvaluation.sortedCardsByValue
+        ? handEvaluation.sortedCardsByValue
+        : handEvaluation.cards
+      )
+        .map((card) => (card ? this.getRank(card) : 0))
+        .reduce((acc, cur, i, arr) => {
+          return acc + cur * Math.pow(10, (arr.length - i - 1) * 2);
+        }, 0) +
+      handEvaluation.level * Math.pow(10, handEvaluation.cards.length * 2 + 1);
+    return handEvaluation;
+  },
+
+  getHandEvaluation(hand, pocketCards) {
     let handEvaluation = {
       hand,
       pocketCards,
     };
-    if (straightFlush) {
+    const flush = this.getFlush(hand);
+    if (flush) {
+      const straightFlush = this.getStraightFlush(flush);
+      if (straightFlush) {
+        handEvaluation = {
+          ...handEvaluation,
+          level: HANDS.STRAIGHT_FLUSH,
+          levelValue: "STRAIGHT_FLUSH",
+          cards: straightFlush,
+          // This is a special case where we need to return the highest card in the straight first for the calcualtion of the hand value
+          sortedCardsByValue: straightFlush.slice().reverse(),
+        };
+        return handEvaluation;
+      }
       handEvaluation = {
         ...handEvaluation,
-        level: HANDS.STRAIGHT_FLUSH,
-        levelValue: "STRAIGHT_FLUSH",
-        cards: straightFlush,
-        // This is a special case where we need to return the highest card in the straight first for the calcualtion of the hand value
-        sortedCardsByValue: straight.slice().reverse(),
+        level: HANDS.FLUSH,
+        levelValue: "FLUSH",
+        cards: flush,
+        // This is a special case where we need to return the highest card in the flush first for the calcualtion of the hand value
+        sortedCardsByValue: flush.slice().reverse(),
       };
-    } else if (quads.length > 0) {
+      return handEvaluation;
+    }
+    const quads = this.getQuads(hand);
+    if (quads.length > 0) {
       handEvaluation = {
         ...handEvaluation,
         level: HANDS.FOUR_OF_A_KIND,
@@ -58,7 +85,11 @@ const evaluator = {
           this.getHighestCard(this.filterHand(hand, ...quads)),
         ],
       };
-    } else if ((sets.length > 0 && pairs.length > 0) || sets.length > 1) {
+      return handEvaluation;
+    }
+    const sets = this.getSets(hand);
+    const pairs = this.getPairs(hand);
+    if ((sets.length > 0 && pairs.length > 0) || sets.length > 1) {
       handEvaluation = {
         ...handEvaluation,
         level: HANDS.FULL_HOUSE,
@@ -68,16 +99,10 @@ const evaluator = {
           ...(pairs.length > 0 ? pairs.at(-1) : sets.at(-2).slice(-2)),
         ],
       };
-    } else if (flush) {
-      handEvaluation = {
-        ...handEvaluation,
-        level: HANDS.FLUSH,
-        levelValue: "FLUSH",
-        cards: flush,
-        // This is a special case where we need to return the highest card in the flush first for the calcualtion of the hand value
-        sortedCardsByValue: flush.slice().reverse(),
-      };
-    } else if (straight) {
+      return handEvaluation;
+    }
+    const straight = this.getStraight(hand);
+    if (straight) {
       handEvaluation = {
         ...handEvaluation,
         level: HANDS.STRAIGHT,
@@ -86,7 +111,9 @@ const evaluator = {
         // This is a special case where we need to return the highest card in the straight first for the calcualtion of the hand value
         sortedCardsByValue: straight.slice().reverse(),
       };
-    } else if (sets.length > 0) {
+      return handEvaluation;
+    }
+    if (sets.length > 0) {
       handEvaluation = {
         ...handEvaluation,
         level: HANDS.THREE_OF_A_KIND,
@@ -98,7 +125,9 @@ const evaluator = {
             .reverse(),
         ],
       };
-    } else if (pairs.length > 1) {
+      return handEvaluation;
+    }
+    if (pairs.length > 1) {
       handEvaluation = {
         ...handEvaluation,
         level: HANDS.TWO_PAIR,
@@ -113,7 +142,9 @@ const evaluator = {
             .reverse(),
         ],
       };
-    } else if (pairs.length === 1) {
+      return handEvaluation;
+    }
+    if (pairs.length === 1) {
       handEvaluation = {
         ...handEvaluation,
         level: HANDS.ONE_PAIR,
@@ -123,40 +154,26 @@ const evaluator = {
           ...this.sortHand(this.filterHand(hand, pairs[0])).slice(-3).reverse(),
         ],
       };
-    } else {
-      handEvaluation = {
-        ...handEvaluation,
-
-        level: HANDS.HIGH_CARD,
-        levelValue: "HIGH_CARD",
-        cards: [...this.sortHand(hand).slice(-5).reverse()],
-        hand,
-        pocketCards,
-      };
+      return handEvaluation;
     }
-    handEvaluation.handValue =
-      (handEvaluation.sortedCardsByValue
-        ? handEvaluation.sortedCardsByValue
-        : handEvaluation.cards
-      )
-        .map((card) => (card ? this.getRank(card) : 0))
-        .reduce((acc, cur, i, arr) => {
-          return acc + cur * Math.pow(10, (arr.length - i - 1) * 2);
-        }, 0) +
-      handEvaluation.level * Math.pow(10, handEvaluation.cards.length * 2 + 1);
+    handEvaluation = {
+      ...handEvaluation,
+
+      level: HANDS.HIGH_CARD,
+      levelValue: "HIGH_CARD",
+      cards: [...this.sortHand(hand).slice(-5).reverse()],
+      hand,
+      pocketCards,
+    };
     return handEvaluation;
   },
 
   /**
    * Returns the straight flush in the hand or null if there is none;
-   * @param {*} hand The hand to verify, represented as an array of cards.
+   * @param {*} flush The flusg to verify, represented as an array of cards.
    * @returns The straight flush if it exists, otherwise null.
    */
-  getStraightFlush(hand) {
-    const flush = this.getCompleteFlush(hand);
-    if (!flush) {
-      return null;
-    }
+  getStraightFlush(flush) {
     const straightFlush = this.getStraight(flush);
     return straightFlush;
   },
