@@ -1,163 +1,116 @@
 import evaluate7cards from "../eval/evaluator7.js";
 import { rankCodes, suitCodes } from "../eval/hand-code.js";
 import { handRank } from "../eval/hand-rank.js";
+import {
+  combinations,
+  combinationsCount,
+  shuffleArray,
+} from "../utils/Utils.js";
 import { allCards } from "./cards.js";
-
-/* eslint-disable */
-self.onmessage = ({ data: { hands, fullBoard } }) => {
-  analyze(hands, fullBoard, self.postMessage, self.close);
-}; /* eslint-enable */
 
 /**
  * Analyze the situation
- * @param {*} hands Hands of the players, array of array of string, each string being a card, eg. [["As", "Ad"], ["Jc", "Qh"]]
+ * @param {*} pocketCards Hands of the players, array of array of string, each string being a card, eg. [["As", "Ad"], ["Jc", "Qh"]]
  * @param {*} fullBoard Board of the game, array of string, each string being a card, empty string for no card, eg. ["Ks", "Ts", "", "", ""]
- * @returns The analyse of the situation
+ * @param {*} callback Callback function called every 100k iterations, with the analysis result as parameter
+ * @param {*} done Function called when the analysis is done
+ * @returns The analysis of the situation
  */
-export function analyze(hands, fullBoard, postMessage, close) {
+export function analyze(pocketCards, fullBoard, callback, done) {
   const t0 = performance.now();
-  const fullHands = hands.filter((h) => h.every((c) => c !== ""));
+
+  // We check first if there is at least 2 full hands (hands with 2 cards)
+  const fullHands = pocketCards.filter((h) => h.every((c) => c !== ""));
   if (fullHands.length < 2) {
-    postMessage([]);
+    callback([]);
     return;
   }
-  const board = fullBoard.filter((c) => c !== "");
-  const numberOfCardsToCompleteBoard = 5 - board.length;
-  const deadCards = [...hands.flatMap((h) => h), ...board];
-  const remainingDeck = allCards.filter((c) => !deadCards.includes(c));
 
-  let analysis = hands.map((hand, i) => {
-    return {
-      key: i,
-      wins: 0,
-      ties: 0,
-      hand,
-      iterations: 1,
-      totalIterations: combinationsCount(
-        remainingDeck.length,
-        numberOfCardsToCompleteBoard
-      ),
-      levels: [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    };
-  });
-  postMessage(analysis);
-  const analysisWithHands = analysis.filter((a) =>
-    a.hand.every((c) => c !== "")
+  // We filter the fullBoard to get only cards that are on the board
+  const board = fullBoard.filter((c) => c !== "");
+  // We compute the number of cards necessary to complete the board (which is 5 minus the number of cards on the board)
+  const numberOfCardsToCompleteBoard = 5 - board.length;
+  // The dead cards are the pocket cards and the cards on the board
+  const deadCards = [...pocketCards.flatMap((h) => h), ...board];
+  // The remainding cards are all the cards minus the dead cards
+  const remainingDeck = allCards.filter((c) => !deadCards.includes(c));
+  // We compute the number of boards that can be made with the remaining cards
+  const boardCount = combinationsCount(
+    remainingDeck.length,
+    numberOfCardsToCompleteBoard
   );
 
-  let drawnCardsList = [];
+  // Let's initiate our analysis object, which will be returned by the function
+  let analysis = pocketCards.map((pockets) => {
+    return {
+      iterations: 1, // number of boards analyzed
+      wins: 0, // number of wins for all the iterations tested
+      ties: 0, // same for ties
+      pocketCards: pockets, // the pocket cards of the player
+      totalIterations: boardCount, // the total number of iterations that will be tested
+      handRanks: [0, 0, 0, 0, 0, 0, 0, 0, 0], // the rank of the hand for all iterations tested (from index 0 to 8, 0 being straight flush and 8 being high card)
+    };
+  });
+  callback(analysis); // We send the analysis to the callback function a first time (to initialize the progress bar)
 
+  // We will only run the analyis for the hand with 2 cards set
+  const analysisWithHands = analysis.filter((a) =>
+    a.pocketCards.every((c) => c !== "")
+  );
+
+  // Let's draw all boards first
+  let boards = [];
   const t1 = performance.now();
   console.log((t1 - t0) / 1000 + "s - Start drawing cards");
+  // If the board is full, we add an empty array to the list of boards to be sure to run the analyis once
   if (numberOfCardsToCompleteBoard === 0) {
-    drawnCardsList.push([]);
+    boards.push([]);
   } else {
-    drawnCardsList = combinations(remainingDeck, numberOfCardsToCompleteBoard);
-    shuffleArray(drawnCardsList);
+    // If the board is not full, we get all combinations of the remaining cards to create the boards
+    boards = combinations(remainingDeck, numberOfCardsToCompleteBoard);
+    // To have a good estimation before the end of the analyis, we shuffle the list of boards
+    shuffleArray(boards);
   }
   const t2 = performance.now();
   console.log((t2 - t1) / 1000 + "s - End drawing cards");
-  console.log(drawnCardsList.length + " cards drawn");
-  let i = 0;
-  for (let drawnCards of drawnCardsList) {
-    const iterations = i;
+  console.log(boards.length + " cards drawn");
+
+  // We iterate through all the boards
+  for (let [i, drawnCards] of boards.entries()) {
     analysisWithHands.forEach((p) => {
-      p.iterations = iterations + 1;
+      // We evaluate all of the hands (pocket cards and board cards)
       p.handValue = evaluate7cards(
-        ...[...p.hand, ...board, ...drawnCards]
+        ...[...p.pocketCards, ...board, ...drawnCards]
           .filter((c) => c)
           .map((h) => rankCodes[h[0]] | suitCodes[h[1]])
       );
       const level = handRank(p.handValue);
-      p.levels[level] = p.levels[level] + 1;
+      p.handRanks[level] = p.handRanks[level] + 1;
     });
+
+    // We get the be  st hand value (value of the winning hand)
     const bestHandValue = Math.min(
       ...analysisWithHands.map((e) => e.handValue)
     );
-    const winningEvals = analysisWithHands.filter(
-      (e) => e.handValue === bestHandValue
-    );
-    const winningHands = analysisWithHands.filter((h) =>
-      winningEvals.some((e) => e.hand === h.hand)
-    );
-    if (winningHands.length > 1) {
-      winningHands.forEach((h) => h.ties++);
-    } else {
-      winningHands.forEach((h) => h.wins++);
+    // We look for the hands with the best hand value and update wins and ties
+    analysisWithHands
+      .filter((e) => e.handValue === bestHandValue)
+      .forEach((hand, _, winningHands) => {
+        winningHands.length > 1 ? hand.ties++ : hand.wins++;
+      });
+
+    // We call the callback function every 100k iterations
+    if (i > 0 && i % 100000 === 0) {
+      analysisWithHands.forEach((p) => (p.iterations = i));
+      callback(analysis);
     }
-    if (i > 0 && (i + 1) % 100000 === 0) {
-      postMessage(analysis);
-    }
-    i++;
   }
+  // When finished, we update the iterations to the total number of iterations
+  analysisWithHands.forEach((p) => (p.iterations = boards.length));
   const t3 = performance.now();
   console.log((t3 - t2) / 1000 + "s - End analyzing");
-  postMessage(analysis);
-  close();
-}
 
-function combinations(set, k) {
-  var i, j, combs, head, tailcombs;
-
-  // There is no way to take e.g. sets of 5 elements from
-  // a set of 4.
-  if (k > set.length || k <= 0) {
-    return [];
-  }
-
-  // K-sized set has only one K-sized subset.
-  if (k === set.length) {
-    return [set];
-  }
-
-  // There is N 1-sized subsets in a N-sized set.
-  if (k === 1) {
-    combs = [];
-    for (i = 0; i < set.length; i++) {
-      combs.push([set[i]]);
-    }
-    return combs;
-  }
-
-  combs = [];
-  for (i = 0; i < set.length - k + 1; i++) {
-    // head is a list that includes only our current element.
-    head = set.slice(i, i + 1);
-    // We take smaller combinations from the subsequent elements
-    tailcombs = combinations(set.slice(i + 1), k - 1);
-    // For each (k-1)-combination we join it with the current
-    // and store it to the set of k-combinations.
-    for (j = 0; j < tailcombs.length; j++) {
-      combs.push(head.concat(tailcombs[j]));
-    }
-  }
-  return combs;
-}
-
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const temp = array[i];
-    array[i] = array[j];
-    array[j] = temp;
-  }
-}
-
-function productRange(a, b) {
-  var prd = a,
-    i = a;
-
-  while (i++ < b) {
-    prd *= i;
-  }
-  return prd;
-}
-
-function combinationsCount(n, r) {
-  if (n === r || r === 0) {
-    return 1;
-  } else {
-    r = r < n - r ? n - r : r;
-    return productRange(r + 1, n) / productRange(1, n - r);
-  }
+  // At least we call the callback function one last time with the final analysis and the done function
+  callback(analysis);
+  done();
 }

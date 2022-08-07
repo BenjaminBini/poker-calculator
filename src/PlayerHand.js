@@ -89,7 +89,7 @@ const PlayerHand = ({
     {handEvals.length > 0 && hand.every((c) => c !== "") && (
       <div className="bg-slate-800 bg-opacity-80 rounded-md p-2 dk:my-2 w-[158px] dk:absolute dk:hidden">
         <ul className="text-xs font-semibold flex flex-col h-full justify-between">
-          {handEvals[i].levels.map((winsForLevel, level) => (
+          {handEvals[i].handRanks.map((winsForLevel, level) => (
             <li key={level} className="flex justify-between">
               <div>{rankDescription[level]}</div>
               <div>

@@ -98,9 +98,7 @@ function App() {
     if (calculatorWorker) {
       calculatorWorker.terminate();
     }
-    const worker = new Worker(
-      new URL("./poker-eval/calculator.js", import.meta.url)
-    );
+    const worker = new Worker(new URL("./worker/worker.js", import.meta.url));
     setCalculateWorker(worker);
     worker.onmessage = (data) => {
       setHandEvals(data.data);
@@ -151,9 +149,14 @@ function App() {
                 <div>Please pick at least 2 hands</div>
               )}
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+            <div className="w-full bg-gray-700 rounded-full h-2.5">
               <div
-                className="bg-blue-600 h-2.5 rounded-full"
+                className={`h-2.5 rounded-full ${
+                  handEvals.length > 0 &&
+                  handEvals[0].iterations === handEvals[0].totalIterations
+                    ? "bg-green-500"
+                    : "bg-blue-600"
+                }`}
                 style={{
                   width:
                     handEvals.length > 0
@@ -221,7 +224,7 @@ function App() {
                   >
                     <div className="font-bold mb-2">Player {i + 1}</div>
                     <ul className="text-sm font-semibold flex flex-col gap-1 justify-between min-w-[180px]">
-                      {handEvals[i].levels.map((winsForLevel, level) => (
+                      {handEvals[i].handRanks.map((winsForLevel, level) => (
                         <li key={level} className="flex justify-between">
                           <div>{rankDescription[level]}</div>
                           <div>
