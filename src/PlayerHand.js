@@ -1,5 +1,6 @@
 import CardButton from "./CardButton";
 import CardPlaceHolder from "./CardPlaceHolder";
+import { rankDescription } from "./eval/hand-rank";
 import MiniCard from "./MiniCard";
 import { HAND_LABELS } from "./poker-eval/enums";
 
@@ -88,13 +89,12 @@ const PlayerHand = ({
     {handEvals.length > 0 && hand.every((c) => c !== "") && (
       <div className="bg-slate-800 bg-opacity-80 rounded-md p-2 dk:my-2 w-[158px] dk:absolute dk:hidden">
         <ul className="text-xs font-semibold flex flex-col h-full justify-between">
-          {Object.keys(handEvals[i].levels).map((l, j) => (
-            <li key={j} className="flex justify-between">
-              <div>{HAND_LABELS[l]}</div>
+          {handEvals[i].levels.map((winsForLevel, level) => (
+            <li key={level} className="flex justify-between">
+              <div>{rankDescription[level]}</div>
               <div>
-                {Math.round(
-                  (handEvals[i].levels[l] / handEvals[i].iterations) * 10000
-                ) / 100}
+                {Math.round((winsForLevel / handEvals[i].iterations) * 10000) /
+                  100}
                 &nbsp;%
               </div>
             </li>

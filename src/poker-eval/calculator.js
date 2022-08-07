@@ -1,6 +1,7 @@
+import evaluate7cards from "../eval/evaluator7.js";
+import { rankCodes, suitCodes } from "../eval/hand-code.js";
+import { handRank } from "../eval/hand-rank.js";
 import { allCards } from "./cards.js";
-import { HANDS } from "./enums.js";
-import evaluator from "./evaluator.js";
 
 /* eslint-disable */
 self.onmessage = ({ data: { hands, fullBoard } }) => {
@@ -21,11 +22,11 @@ export function analyze(hands, fullBoard, postMessage, close) {
     return;
   }
   const board = fullBoard.filter((c) => c !== "");
-  const numberOfCardsToCompleteBoard = 7 - fullHands[0].length - board.length;
+  const numberOfCardsToCompleteBoard = 5 - board.length;
   const deadCards = [...hands.flatMap((h) => h), ...board];
-  const possibleCards = allCards.filter((c) => !deadCards.includes(c));
+  const remainingDeck = allCards.filter((c) => !deadCards.includes(c));
 
-  const analysis = hands.map((hand, i) => {
+  let analysis = hands.map((hand, i) => {
     return {
       key: i,
       wins: 0,
@@ -33,15 +34,10 @@ export function analyze(hands, fullBoard, postMessage, close) {
       hand,
       iterations: 1,
       totalIterations: combinationsCount(
-        possibleCards.length,
+        remainingDeck.length,
         numberOfCardsToCompleteBoard
       ),
-      levels: {
-        ...Object.keys(HANDS).reduce(
-          (acc, curr) => ({ ...acc, [curr]: 0 }),
-          {}
-        ),
-      },
+      levels: [0, 0, 0, 0, 0, 0, 0, 0, 0],
     };
   });
   postMessage(analysis);
@@ -56,7 +52,7 @@ export function analyze(hands, fullBoard, postMessage, close) {
   if (numberOfCardsToCompleteBoard === 0) {
     drawnCardsList.push([]);
   } else {
-    drawnCardsList = combinations(possibleCards, numberOfCardsToCompleteBoard);
+    drawnCardsList = combinations(remainingDeck, numberOfCardsToCompleteBoard);
     shuffleArray(drawnCardsList);
   }
   const t2 = performance.now();
@@ -64,26 +60,32 @@ export function analyze(hands, fullBoard, postMessage, close) {
   console.log(drawnCardsList.length + " cards drawn");
   let i = 0;
   for (let drawnCards of drawnCardsList) {
-    const handEvals = analysisWithHands.map((p) =>
-      evaluator.evaluate(p.hand, [...board, ...drawnCards])
-    );
-    const maxEval = Math.max(...handEvals.map((e) => e.handValue));
-    const winningEvals = handEvals.filter((e) => e.handValue === maxEval);
     const iterations = i;
     analysisWithHands.forEach((p) => {
       p.iterations = iterations + 1;
-      const handEval = handEvals.find((e) => e.pocketCards === p.hand);
-      p.levels[handEval.levelValue] = p.levels[handEval.levelValue] + 1;
+      p.handValue = evaluate7cards(
+        ...[...p.hand, ...board, ...drawnCards]
+          .filter((c) => c)
+          .map((h) => rankCodes[h[0]] | suitCodes[h[1]])
+      );
+      const level = handRank(p.handValue);
+      p.levels[level] = p.levels[level] + 1;
     });
+    const bestHandValue = Math.min(
+      ...analysisWithHands.map((e) => e.handValue)
+    );
+    const winningEvals = analysisWithHands.filter(
+      (e) => e.handValue === bestHandValue
+    );
     const winningHands = analysisWithHands.filter((h) =>
-      winningEvals.some((e) => e.pocketCards === h.hand)
+      winningEvals.some((e) => e.hand === h.hand)
     );
     if (winningHands.length > 1) {
       winningHands.forEach((h) => h.ties++);
     } else {
       winningHands.forEach((h) => h.wins++);
     }
-    if (i > 0 && (i + 1) % 10000 === 0) {
+    if (i > 0 && (i + 1) % 100000 === 0) {
       postMessage(analysis);
     }
     i++;
