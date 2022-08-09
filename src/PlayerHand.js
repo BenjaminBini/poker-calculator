@@ -30,7 +30,7 @@ const PlayerHand = ({
     className={`z-10 hover:z-20 text-slate-100  dk:absolute ${playerClassNames[i]} flex gap-4`}
   >
     <div
-      className={`dk:w-[124px] z-10 hover:z-20  shadow-xl rounded-md bg-slate-600 bg-opacity-50 dk:backdrop-blur-md`}
+      className={`dk:w-[124px] z-10 hover:z-20  shadow-xl rounded-md bg-slate-600 bg-opacity-80`}
     >
       <div className="space-y-1 dk:py-1 dk:px-2 py-2 px-2">
         <div className="text-sm font-bold dk:text-center">Player {i + 1}</div>
