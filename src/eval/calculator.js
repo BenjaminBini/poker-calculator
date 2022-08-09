@@ -1,12 +1,8 @@
-import evaluate7cards from "../eval/evaluator7.js";
-import { rankCodes, suitCodes } from "../eval/hand-code.js";
-import { handRank } from "../eval/hand-rank.js";
-import {
-  combinations,
-  combinationsCount,
-  shuffleArray,
-} from "../utils/Utils.js";
-import { allCards } from "./cards.js";
+import { combinations, combinationsCount, shuffleArray } from "../utils/Utils";
+import { allCards } from "./cards";
+import evaluate7cards from "./fast-eval/evaluator7";
+import { rankCodes, suitCodes } from "./hand-code";
+import { handRank } from "./hand-rank";
 
 /**
  * Analyze the situation
@@ -84,8 +80,8 @@ export function analyze(pocketCards, fullBoard, callback, done) {
           .filter((c) => c)
           .map((h) => rankCodes[h[0]] | suitCodes[h[1]])
       );
-      const level = handRank(p.handValue);
-      p.handRanks[level] = p.handRanks[level] + 1;
+      const rank = handRank(p.handValue);
+      p.handRanks[rank] = p.handRanks[rank] + 1;
     });
 
     // We get the be  st hand value (value of the winning hand)

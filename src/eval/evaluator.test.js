@@ -1,4 +1,15 @@
 import evaluator from "./evaluator";
+import {
+  FLUSH,
+  FOUR_OF_A_KIND,
+  FULL_HOUSE,
+  HIGH_CARD,
+  ONE_PAIR,
+  STRAIGHT,
+  STRAIGHT_FLUSH,
+  THREE_OF_A_KIND,
+  TWO_PAIR,
+} from "./hand-rank";
 
 test("get the suit of a card", function () {
   expect(evaluator.getSuit("2c")).toBe("c");
@@ -9,13 +20,13 @@ test("get the suit of a card", function () {
 });
 
 test("get the rank of a card", function () {
-  expect(evaluator.getRank("2c")).toBe(2);
-  expect(evaluator.getRank("2h")).toBe(2);
-  expect(evaluator.getRank("5h")).toBe(5);
-  expect(evaluator.getRank("Ad")).toBe(14);
-  expect(evaluator.getRank("Qs")).toBe(12);
-  expect(evaluator.getRank("Qs")).not.toBe(11);
-  expect(evaluator.getRank("Ad")).not.toBe(13);
+  expect(evaluator.getRank("2c")).toBe(0 << 2);
+  expect(evaluator.getRank("2h")).toBe(0 << 2);
+  expect(evaluator.getRank("5h")).toBe(3 << 2);
+  expect(evaluator.getRank("Ad")).toBe(12 << 2);
+  expect(evaluator.getRank("Qs")).toBe(10 << 2);
+  expect(evaluator.getRank("Qs")).not.toBe(9 << 2);
+  expect(evaluator.getRank("Ad")).not.toBe(11 << 2);
 });
 
 test("get the suit map of a hand", function () {
@@ -37,9 +48,9 @@ test("get the suit map of a hand", function () {
 
 test("get the rank map of a hand", function () {
   expect(evaluator.getRankMap(["2c", "2h", "As", "3c", "3d"])).toEqual({
-    2: 2,
-    3: 2,
-    14: 1,
+    0b000000: 2,
+    0b000100: 2,
+    0b110000: 1,
   });
 });
 
@@ -154,121 +165,67 @@ test("get value of a hand", function () {
     ["Ah", "As"],
     ["2h", "3h", "4h", "5h", "5d"]
   );
-  expect(evalStraightFlush1.level).toBe(8);
+  expect(evalStraightFlush1.rank).toBe(STRAIGHT_FLUSH);
   expect(evalStraightFlush1.cards).toEqual(["Ah", "2h", "3h", "4h", "5h"]);
   const evalStraightFlush2 = evaluator.evaluate(
     ["2c", "Jh", "4c", "Th", "Qh", "Kh", "Ah"],
     []
   );
-  expect(evalStraightFlush2.level).toBe(8);
+  expect(evalStraightFlush2.rank).toBe(STRAIGHT_FLUSH);
   expect(evalStraightFlush2.cards).toEqual(["Th", "Jh", "Qh", "Kh", "Ah"]);
 
   const evalQuads = evaluator.evaluate(
     ["2c", "2h", "4c", "Th", "Qh", "2s", "2d"],
     []
   );
-  expect(evalQuads.level).toBe(7);
+  expect(evalQuads.rank).toBe(FOUR_OF_A_KIND);
   expect(evalQuads.cards).toEqual(["2c", "2h", "2s", "2d", "Qh"]);
   const evalFull = evaluator.evaluate(
     ["2c", "Th", "Td", "2h", "Ah", "Tc", "Ad"],
     []
   );
-  expect(evalFull.level).toBe(6);
+  expect(evalFull.rank).toBe(FULL_HOUSE);
   expect(evalFull.cards).toEqual(["Th", "Td", "Tc", "Ah", "Ad"]);
   const evalFlush = evaluator.evaluate(
     ["2c", "Kc", "8d", "Ac", "4d", "7c", "Jc"],
     []
   );
-  expect(evalFlush.level).toBe(5);
+  expect(evalFlush.rank).toBe(FLUSH);
   expect(evalFlush.cards).toEqual(["2c", "7c", "Jc", "Kc", "Ac"]);
   const evalStraight = evaluator.evaluate(
     ["2c", "4c", "3d", "Ac", "8d", "5h", "Js"],
     []
   );
-  expect(evalStraight.level).toBe(4);
+  expect(evalStraight.rank).toBe(STRAIGHT);
   expect(evalStraight.cards).toEqual(["Ac", "2c", "3d", "4c", "5h"]);
   const evalStraight2 = evaluator.evaluate(
     ["Kh", "Ks"],
     ["Ts", "Js", "Qs", "5d", "Ah"]
   );
-  expect(evalStraight2.level).toBe(4);
+  expect(evalStraight2.rank).toBe(STRAIGHT);
   expect(evalStraight2.cards).toEqual(["Ts", "Js", "Qs", "Kh", "Ah"]);
   const evalSet = evaluator.evaluate(
     ["2c", "4c", "2d", "Ac", "8d", "2h", "Js"],
     []
   );
-  expect(evalSet.level).toBe(3);
+  expect(evalSet.rank).toBe(THREE_OF_A_KIND);
   expect(evalSet.cards).toEqual(["2c", "2d", "2h", "Ac", "Js"]);
-  const evalTwoPairs = evaluator.evaluate(
+  const evalTwoPair = evaluator.evaluate(
     ["2c", "4c", "2d", "4c", "8d", "8h", "Js"],
     []
   );
-  expect(evalTwoPairs.level).toBe(2);
-  expect(evalTwoPairs.cards).toEqual(["8d", "8h", "4c", "4c", "Js"]);
+  expect(evalTwoPair.rank).toBe(TWO_PAIR);
+  expect(evalTwoPair.cards).toEqual(["8d", "8h", "4c", "4c", "Js"]);
   const evalPair = evaluator.evaluate(
     ["2c", "4c", "8d", "Ac", "Kd", "7h", "Ks"],
     []
   );
-  expect(evalPair.level).toBe(1);
+  expect(evalPair.rank).toBe(ONE_PAIR);
   expect(evalPair.cards).toEqual(["Kd", "Ks", "Ac", "8d", "7h"]);
   const evalHighCard = evaluator.evaluate(
     ["2c", "4c", "8d", "Ac", "Kd", "7h", "3s"],
     []
   );
-  expect(evalHighCard.level).toBe(0);
+  expect(evalHighCard.rank).toBe(HIGH_CARD);
   expect(evalHighCard.cards).toEqual(["Ac", "Kd", "8d", "7h", "4c"]);
-
-  const evalLowStraight = evaluator.evaluate(
-    ["Ac", "8d"],
-    ["2c", "3c", "4c", "5d", "8s"]
-  );
-  const evalHighStraight = evaluator.evaluate(
-    ["5h", "6h"],
-    ["2c", "3c", "4c", "5d", "8s"]
-  );
-  expect(evalHighStraight.handValue).toBeGreaterThan(evalLowStraight.handValue);
-
-  const twoPairHighKicker = evaluator.evaluate(
-    ["9d", "7d"],
-    ["Ac", "Ah", "Kc", "Kh", "2s"]
-  );
-  const twoPairLowKicker = evaluator.evaluate(
-    ["5d", "7s"],
-    ["Ac", "Ah", "Kc", "Kh", "2s"]
-  );
-  expect(twoPairHighKicker.handValue).toBeGreaterThan(
-    twoPairLowKicker.handValue
-  );
-
-  const highFull = evaluator.evaluate(
-    ["9d", "7d"],
-    ["7h", "7c", "8s", "9s", "9h"]
-  );
-  const lowFull = evaluator.evaluate(
-    ["5d", "7s"],
-    ["7h", "7c", "8s", "9s", "9h"]
-  );
-  expect(highFull.handValue).toBeGreaterThan(lowFull.handValue);
-
-  const twoPairA7Kicker9 = evaluator.evaluate(
-    ["9d", "7d"],
-    ["Ac", "6d", "7h", "Ah", "5s"]
-  );
-  const twoPairA7Kicker5 = evaluator.evaluate(
-    ["5d", "7s"],
-    ["Ac", "6d", "7h", "Ah", "5s"]
-  );
-  expect(twoPairA7Kicker9.handValue).toBeGreaterThan(
-    twoPairA7Kicker5.handValue
-  );
-
-  const highFlush = evaluator.evaluate(
-    ["As", "Jd"],
-    ["Ah", "8d", "Qd", "Ad", "6d"]
-  );
-  const lowFlush = evaluator.evaluate(
-    ["7d", "9d"],
-    ["Ah", "8d", "Qd", "Ad", "6d"]
-  );
-  expect(highFlush.handValue).toBeGreaterThan(lowFlush.handValue);
 });

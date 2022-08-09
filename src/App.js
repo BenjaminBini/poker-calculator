@@ -1,12 +1,12 @@
 import { useState } from "react";
 
-import Button from "./Button.js";
-import CardButton from "./CardButton.js";
-import CardPlaceHolder from "./CardPlaceHolder.js";
-import CardSelector from "./CardSelector.js";
-import { rankDescription } from "./eval/hand-rank.js";
-import PlayerHand from "./PlayerHand.js";
-import evaluator from "./poker-eval/evaluator.js";
+import Button from "./Button";
+import CardButton from "./CardButton";
+import CardPlaceHolder from "./CardPlaceHolder";
+import CardSelector from "./CardSelector";
+import evaluator from "./eval/evaluator";
+import { rankDescription } from "./eval/hand-rank";
+import PlayerHand from "./PlayerHand";
 
 function App() {
   const initialHands = [
@@ -224,12 +224,12 @@ function App() {
                   >
                     <div className="font-bold mb-2">Player {i + 1}</div>
                     <ul className="text-sm font-semibold flex flex-col gap-1 justify-between min-w-[180px]">
-                      {handEvals[i].handRanks.map((winsForLevel, level) => (
-                        <li key={level} className="flex justify-between">
-                          <div>{rankDescription[level]}</div>
+                      {handEvals[i].handRanks.map((numberOfHands, handRank) => (
+                        <li key={handRank} className="flex justify-between">
+                          <div>{rankDescription[handRank]}</div>
                           <div>
                             {Math.round(
-                              (winsForLevel / handEvals[i].iterations) * 10000
+                              (numberOfHands / handEvals[i].iterations) * 10000
                             ) / 100}
                             &nbsp;%
                           </div>

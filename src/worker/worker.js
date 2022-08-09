@@ -1,4 +1,4 @@
-import { analyze } from "../poker-eval/calculator";
+import { analyze } from "../eval/calculator";
 
 /* eslint-disable */
 self.onmessage = ({ data: { hands, fullBoard } }) => {

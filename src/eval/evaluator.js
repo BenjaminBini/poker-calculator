@@ -1,27 +1,20 @@
-import { HANDS, RANKS } from "./enums";
+import { rankCodes } from "./hand-code";
+import {
+  FLUSH,
+  FOUR_OF_A_KIND,
+  FULL_HOUSE,
+  HIGH_CARD,
+  ONE_PAIR,
+  STRAIGHT,
+  STRAIGHT_FLUSH,
+  THREE_OF_A_KIND,
+  TWO_PAIR,
+} from "./hand-rank";
 
+/**
+ * Slow evaluator, only used to have exact best hand and readable labels
+ */
 const evaluator = {
-  /**
-   * Compare two Texas Hold'em hands
-   * @param {*} hand1 First hand to compare, represented as an array of cards.
-   * @param {*} hand2 First hand to compare, represented as an array of cards.
-   * @returns Positive number if hand1 is better than hand2, negative number if hand2 is better than hand1, 0 if they are equal
-   */
-  compare(hand1, hand2) {
-    const hand1Value = this.evaluate(hand1);
-    const hand2Value = this.evaluate(hand2);
-    return this.compareEvals(hand1Value, hand2Value);
-  },
-  /**
-   * Compare two Texas Hold'em hands evaluations
-   * @param {*} eval1 First value to compare
-   * @param {*} eval2 Second value to compare
-   * @returns Positive number if eval1 is better than eval2, negative number if eval2 is better than eval1, 0 if they are equal
-   */
-  compareEvals(eval1, eval2) {
-    const result = eval1.level - eval2.level;
-    return result !== 0 ? result : eval1.handValue - eval2.handValue;
-  },
   evaluate(pocketCards, board) {
     const hand = [...pocketCards, ...(board ? board : [])].filter(
       (c) => c.length === 2
@@ -29,19 +22,7 @@ const evaluator = {
     if (hand.length === 0) {
       return;
     }
-
     const handEvaluation = this.getHandEvaluation(hand, pocketCards);
-
-    handEvaluation.handValue =
-      (handEvaluation.sortedCardsByValue
-        ? handEvaluation.sortedCardsByValue
-        : handEvaluation.cards
-      )
-        .map((card) => (card ? this.getRank(card) : 0))
-        .reduce((acc, cur, i, arr) => {
-          return acc + cur * Math.pow(10, (arr.length - i - 1) * 2);
-        }, 0) +
-      handEvaluation.level * Math.pow(10, handEvaluation.cards.length * 2 + 1);
     return handEvaluation;
   },
 
@@ -56,21 +37,15 @@ const evaluator = {
       if (straightFlush) {
         handEvaluation = {
           ...handEvaluation,
-          level: HANDS.STRAIGHT_FLUSH,
-          levelValue: "STRAIGHT_FLUSH",
+          rank: STRAIGHT_FLUSH,
           cards: straightFlush,
-          // This is a special case where we need to return the highest card in the straight first for the calcualtion of the hand value
-          sortedCardsByValue: straightFlush.slice().reverse(),
         };
         return handEvaluation;
       }
       handEvaluation = {
         ...handEvaluation,
-        level: HANDS.FLUSH,
-        levelValue: "FLUSH",
+        rank: FLUSH,
         cards: flush,
-        // This is a special case where we need to return the highest card in the flush first for the calcualtion of the hand value
-        sortedCardsByValue: flush.slice().reverse(),
       };
       return handEvaluation;
     }
@@ -78,8 +53,7 @@ const evaluator = {
     if (quads.length > 0) {
       handEvaluation = {
         ...handEvaluation,
-        level: HANDS.FOUR_OF_A_KIND,
-        levelValue: "FOUR_OF_A_KIND",
+        rank: FOUR_OF_A_KIND,
         cards: [
           ...quads.at(-1),
           this.getHighestCard(this.filterHand(hand, ...quads)),
@@ -92,8 +66,7 @@ const evaluator = {
     if ((sets.length > 0 && pairs.length > 0) || sets.length > 1) {
       handEvaluation = {
         ...handEvaluation,
-        level: HANDS.FULL_HOUSE,
-        levelValue: "FULL_HOUSE",
+        rank: FULL_HOUSE,
         cards: [
           ...sets.at(-1),
           ...(pairs.length > 0 ? pairs.at(-1) : sets.at(-2).slice(-2)),
@@ -105,19 +78,15 @@ const evaluator = {
     if (straight) {
       handEvaluation = {
         ...handEvaluation,
-        level: HANDS.STRAIGHT,
-        levelValue: "STRAIGHT",
+        rank: STRAIGHT,
         cards: straight,
-        // This is a special case where we need to return the highest card in the straight first for the calcualtion of the hand value
-        sortedCardsByValue: straight.slice().reverse(),
       };
       return handEvaluation;
     }
     if (sets.length > 0) {
       handEvaluation = {
         ...handEvaluation,
-        level: HANDS.THREE_OF_A_KIND,
-        levelValue: "THREE_OF_A_KIND",
+        rank: THREE_OF_A_KIND,
         cards: [
           ...sets.at(-1),
           ...this.sortHand(this.filterHand(hand, sets.at(-1)))
@@ -130,8 +99,7 @@ const evaluator = {
     if (pairs.length > 1) {
       handEvaluation = {
         ...handEvaluation,
-        level: HANDS.TWO_PAIR,
-        levelValue: "TWO_PAIR",
+        rank: TWO_PAIR,
         cards: [
           ...pairs.at(-1),
           ...pairs.at(-2),
@@ -147,8 +115,7 @@ const evaluator = {
     if (pairs.length === 1) {
       handEvaluation = {
         ...handEvaluation,
-        level: HANDS.ONE_PAIR,
-        levelValue: "ONE_PAIR",
+        rank: ONE_PAIR,
         cards: [
           ...pairs[0],
           ...this.sortHand(this.filterHand(hand, pairs[0])).slice(-3).reverse(),
@@ -158,9 +125,7 @@ const evaluator = {
     }
     handEvaluation = {
       ...handEvaluation,
-
-      level: HANDS.HIGH_CARD,
-      levelValue: "HIGH_CARD",
+      rank: HIGH_CARD,
       cards: [...this.sortHand(hand).slice(-5).reverse()],
       hand,
       pocketCards,
@@ -358,7 +323,7 @@ const evaluator = {
    * @returns The rank of the card.
    */
   getRank(card) {
-    return RANKS[card[0]];
+    return rankCodes[card[0]];
   },
 
   /**

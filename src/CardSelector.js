@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import CardButton from "./CardButton";
-import { ranks, suits } from "./poker-eval/cards";
+import { ranks, suits } from "./eval/cards";
 
 const CardSelector = ({ addCard, game }) => {
   const [selectedSuit, setSelectedSuit] = useState("h");

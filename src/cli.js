@@ -1,4 +1,4 @@
-import evaluator from "./poker-eval/evaluator";
+import evaluator from "./eval/evaluator";
 
 const evalStraight2 = evaluator.evaluate(
   ["Kh", "Ks"],
