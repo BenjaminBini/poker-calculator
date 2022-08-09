@@ -2,6 +2,7 @@ import CardButton from "./CardButton";
 import CardPlaceHolder from "./CardPlaceHolder";
 import { rankDescription } from "./eval/hand-rank";
 import MiniCard from "./MiniCard";
+import PlayerHandRanksOdds from "./PlayerHandRanksOdds";
 
 const playerClassNames = [
   "dk:bottom-0 dk:left-1/2 dk:-translate-x-1/2 dk:translate-y-[60px]",
@@ -86,19 +87,11 @@ const PlayerHand = ({
       )}
     </div>
     {handEvals.length > 0 && hand.every((c) => c !== "") && (
-      <div className="bg-slate-800 bg-opacity-80 rounded-md p-2 dk:my-2 w-[158px] dk:absolute dk:hidden">
-        <ul className="text-xs font-semibold flex flex-col h-full justify-between">
-          {handEvals[i].handRanks.map((numberOfHands, handRank) => (
-            <li key={handRank} className="flex justify-between">
-              <div>{rankDescription[handRank]}</div>
-              <div>
-                {Math.round((numberOfHands / handEvals[i].iterations) * 10000) /
-                  100}
-                &nbsp;%
-              </div>
-            </li>
-          ))}
-        </ul>
+      <div className="block dk:hidden">
+        <PlayerHandRanksOdds
+          handEval={handEvals[i]}
+          i={i}
+        ></PlayerHandRanksOdds>
       </div>
     )}
   </div>

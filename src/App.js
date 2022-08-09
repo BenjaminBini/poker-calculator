@@ -1,12 +1,11 @@
 import { useState } from "react";
 
 import Button from "./Button";
-import CardButton from "./CardButton";
-import CardPlaceHolder from "./CardPlaceHolder";
+import CalculatorProgressBar from "./CalculatorProgressBar";
 import CardSelector from "./CardSelector";
 import evaluator from "./eval/evaluator";
-import { rankDescription } from "./eval/hand-rank";
-import PlayerHand from "./PlayerHand";
+import PlayersHandRanksOdds from "./PlayersHandRanksOdds";
+import Table from "./Table";
 
 function App() {
   const initialHands = [
@@ -117,7 +116,7 @@ function App() {
     return null;
   };
 
-  const reset = () => {
+  const newHand = () => {
     const newGame = {
       hands: initialHands,
       board: initialBoard,
@@ -135,112 +134,30 @@ function App() {
       <div className="mx-5">
         <h1 className="font-bold text-4xl mb-6 text-white">Poker calculator</h1>
         <div>
-          <Button onClick={reset}>New hand</Button>
+          <Button onClick={newHand}>New hand</Button>
         </div>
-        <div className="flex items-center space-x-2 dk:mb-6">
-          <div className="w-full mt-2">
-            <div className="text-slate-100 text-sm text-right italic mb-1">
-              {handEvals.length > 0 ? (
-                <span>
-                  {handEvals[0].iterations.toLocaleString()} /{" "}
-                  {handEvals[0].totalIterations.toLocaleString()} iterations
-                </span>
-              ) : (
-                <div>Please pick at least 2 hands</div>
-              )}
-            </div>
-            <div className="w-full bg-gray-700 rounded-full h-2.5">
-              <div
-                className={`h-2.5 rounded-full ${
-                  handEvals.length > 0 &&
-                  handEvals[0].iterations === handEvals[0].totalIterations
-                    ? "bg-green-500"
-                    : "bg-blue-600"
-                }`}
-                style={{
-                  width:
-                    handEvals.length > 0
-                      ? (handEvals[0].iterations /
-                          handEvals[0].totalIterations) *
-                          100 +
-                        "%"
-                      : 0,
-                }}
-              ></div>
-            </div>
-          </div>
-        </div>
+        <CalculatorProgressBar
+          show={handEvals.length > 0}
+          currentIteration={handEvals.length > 0 ? handEvals[0].iterations : 0}
+          totalIterations={
+            handEvals.length > 0 ? handEvals[0].totalIterations : 0
+          }
+        ></CalculatorProgressBar>
         <CardSelector addCard={addCard} game={game}></CardSelector>
-        <div className=" dk:bg-slate-800 dk:shadow-2xl rounded-xl py-6 dk:py-20">
-          <div className="flex flex-col-reverse items-start gap-4 dk:bg-green-600 dk:border-yellow-600 dk:border-[12px] dk:shadow-lg dk:mx-16 rounded-full dk:h-[300px] relative">
-            <div className="hidden dk:block absolute top-0 bottom-0 left-0 right-0  border-2 rounded-full m-2 box-content"></div>
-            <div className="flex flex-col gap-4 mb-40 dk:mb-0">
-              {game.hands.map((hand, i) => (
-                <PlayerHand
-                  key={i}
-                  i={i}
-                  hand={hand}
-                  evaluation={getEval(hand)}
-                  handEvals={handEvals}
-                  cardToEdit={cardToEdit}
-                  setCardToEdit={setCardToEdit}
-                  resetCardFromHand={resetCardFromHand}
-                ></PlayerHand>
-              ))}
-            </div>
-            <div>
-              <div className="dk:absolute dk:left-1/2 dk:-translate-x-1/2 dk:top-1/2 dk:-translate-y-3/4 px-2 pt-1 dk:mt-3 pb-2 border-white flex flex-col gap-1 bg-slate-600 rounded-md bg-opacity-50 shadow-lg">
-                <div className="text-sm font-bold text-slate-100">Board</div>
-                <div className="flex gap-2">
-                  {game.board.map((h, i) =>
-                    h.length > 0 ? (
-                      <CardButton
-                        key={i}
-                        rank={h[0]}
-                        suit={h[1]}
-                        onClick={() => resetCardFromBoard(i)}
-                      ></CardButton>
-                    ) : (
-                      <CardPlaceHolder
-                        onClick={() => setCardToEdit([0, i])}
-                        selected={cardToEdit[0] === 0 && cardToEdit[1] === i}
-                        key={i}
-                      ></CardPlaceHolder>
-                    )
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        {handEvals.length > 0 && (
-          <div className="hidden dk:flex gap-6 flex-wrap my-6">
-            {game.hands.map(
-              (hand, i) =>
-                hand.every((c) => c !== "") && (
-                  <div
-                    key={i}
-                    className=" dk:bg-slate-800 dk:shadow-2xl rounded-xl py-2 px-2 text-slate-100"
-                  >
-                    <div className="font-bold mb-2">Player {i + 1}</div>
-                    <ul className="text-sm font-semibold flex flex-col gap-1 justify-between min-w-[180px]">
-                      {handEvals[i].handRanks.map((numberOfHands, handRank) => (
-                        <li key={handRank} className="flex justify-between">
-                          <div>{rankDescription[handRank]}</div>
-                          <div>
-                            {Math.round(
-                              (numberOfHands / handEvals[i].iterations) * 10000
-                            ) / 100}
-                            &nbsp;%
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )
-            )}
-          </div>
-        )}
+        <Table
+          hands={game.hands}
+          board={game.board}
+          handEvals={handEvals}
+          cardToEdit={cardToEdit}
+          setCardToEdit={setCardToEdit}
+          getEval={getEval}
+          resetCardFromHand={resetCardFromHand}
+          resetCardFromBoard={resetCardFromBoard}
+        ></Table>
+        <PlayersHandRanksOdds
+          hands={game.hands}
+          handEvals={handEvals}
+        ></PlayersHandRanksOdds>
       </div>
     </div>
   );

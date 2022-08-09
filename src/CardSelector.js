@@ -6,7 +6,7 @@ import { ranks, suits } from "./eval/cards";
 const CardSelector = ({ addCard, game }) => {
   const [selectedSuit, setSelectedSuit] = useState("h");
   return (
-    <div className="bg-slate-800 py-4 px-6 dk:mb-6 dk:rounded-xl flex items-center justify-center dk:relative fixed bottom-0 left-0 right-0 z-50 bg-opacity-40 dk:bg-opacity-100">
+    <div className="bg-slate-800 py-4 px-6 dk:mb-6 dk:rounded-xl flex items-center justify-center dk:relative fixed bottom-0 left-0 right-0 z-50">
       <div className="flex flex-col gap-4">
         <div className="flex dk:hidden gap-6 justify-center">
           {suits.map((suit, i) => (
