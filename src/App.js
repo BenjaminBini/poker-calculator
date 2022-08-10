@@ -46,33 +46,36 @@ function App() {
     computeEvals();
   };
 
-  const resetCardFromHand = (i, j) => {
-    game.hands[i - 1][j] = "";
-    setCardToEdit([i, j]);
+  const resetCardFromHand = (handIndex, cardPosition) => {
+    game.hands[handIndex - 1][cardPosition] = "";
+    setCardToEdit([handIndex, cardPosition]);
     setHandEvals([]);
     computeEvals();
   };
 
-  const resetCardFromBoard = (i) => {
-    game.board[i] = "";
-    setCardToEdit([0, i]);
+  const resetCardFromBoard = (cardPosition) => {
+    game.board[cardPosition] = "";
+    setCardToEdit([0, cardPosition]);
     setHandEvals([]);
     computeEvals();
   };
 
   const getNextEmptySlot = () => {
     const handEmptySlots = [];
-    game.hands.forEach((h, i) => {
-      h[0] === "" && handEmptySlots.push([i + 1, 0]);
-      h[1] === "" && handEmptySlots.push([i + 1, 1]);
+    game.hands.forEach((hand, handIndex) => {
+      hand[0].length === 0 && handEmptySlots.push([handIndex + 1, 0]);
+      hand[1].length === 0 && handEmptySlots.push([handIndex + 1, 1]);
     });
-    const boardEmptySlots = Object.keys(game.board)
-      .filter((i) => game.board[i] === "")
-      .map((i) => [0, parseInt(i)]);
+    const boardEmptySlots = game.board
+      .map((card, cardIndex) => ({ card, cardIndex }))
+      .filter((boardSlot) => boardSlot.card.length === 0)
+      .map((boardSlot) => [0, boardSlot.cardIndex]);
+
     const allEmptySlots = [...boardEmptySlots, ...handEmptySlots];
     const firstHandEmptySlotAfterCurrent = handEmptySlots.find(
-      (s) =>
-        (s[0] === cardToEdit[0] && s[1] > cardToEdit[1]) || s[0] > cardToEdit[0]
+      (slot) =>
+        (slot[0] === cardToEdit[0] && slot[1] > cardToEdit[1]) ||
+        slot[0] > cardToEdit[0]
     );
     if (
       cardToEdit[0] === 2 &&
@@ -110,7 +113,7 @@ function App() {
   };
 
   const getEval = (hand) => {
-    if (hand.length === 2 && hand.every((c) => c !== "")) {
+    if (hand.length === 2 && hand.every((card) => card.length > 0)) {
       return evaluator.evaluate(hand, game.board);
     }
     return null;

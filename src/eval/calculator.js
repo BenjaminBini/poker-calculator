@@ -16,14 +16,16 @@ export function analyze(pocketCards, fullBoard, callback, done) {
   const t0 = performance.now();
 
   // We check first if there is at least 2 full hands (hands with 2 cards)
-  const fullHands = pocketCards.filter((h) => h.every((c) => c !== ""));
+  const fullHands = pocketCards.filter((h) =>
+    h.every((card) => card.length > 0)
+  );
   if (fullHands.length < 2) {
     callback([]);
     return;
   }
 
   // We filter the fullBoard to get only cards that are on the board
-  const board = fullBoard.filter((c) => c !== "");
+  const board = fullBoard.filter((card) => card.length > 0);
   // We compute the number of cards necessary to complete the board (which is 5 minus the number of cards on the board)
   const numberOfCardsToCompleteBoard = 5 - board.length;
   // The dead cards are the pocket cards and the cards on the board
@@ -51,7 +53,7 @@ export function analyze(pocketCards, fullBoard, callback, done) {
 
   // We will only run the analyis for the hand with 2 cards set
   const analysisWithHands = analysis.filter((a) =>
-    a.pocketCards.every((c) => c !== "")
+    a.pocketCards.every((card) => card.length > 0)
   );
 
   // Let's draw all boards first
@@ -90,7 +92,7 @@ export function analyze(pocketCards, fullBoard, callback, done) {
     );
     // We look for the hands with the best hand value and update wins and ties
     analysisWithHands
-      .filter((e) => e.handValue === bestHandValue)
+      .filter((evaluation) => evaluation.handValue === bestHandValue)
       .forEach((hand, _, winningHands) => {
         winningHands.length > 1 ? hand.ties++ : hand.wins++;
       });

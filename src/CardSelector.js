@@ -35,10 +35,11 @@ const CardSelector = ({ addCard, game }) => {
                 suit={suit}
                 onClick={() => addCard(`${hand}${suit}`)}
                 disabled={
-                  [...game.hands.flatMap((h) => h), ...game.board].includes(
-                    `${hand}${suit}`
-                  ) ||
-                  [...game.hands.flatMap((h) => h), ...game.board].filter(
+                  [
+                    ...game.hands.flatMap((hand) => hand),
+                    ...game.board,
+                  ].includes(`${hand}${suit}`) ||
+                  [...game.hands.flatMap((hand) => hand), ...game.board].filter(
                     (c) => c.length === 2
                   ).length ===
                     2 * 10 + 5
